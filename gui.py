@@ -1,66 +1,112 @@
 import sys
+import main
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QStackedLayout, QVBoxLayout, QHBoxLayout
-from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFormLayout,
+    QLineEdit,
+    QVBoxLayout,
+    QWidget,
+    QRadioButton,
+    QListWidget,
+    QPushButton,
+    QHBoxLayout,
+    QMessageBox
+)
 
-class Color(QWidget):
+name_list = main.name_list()
 
-    def __init__(self, color):
-        super(Color, self).__init__()
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor(color))
-        self.setPalette(palette)
-
-class MainWindow(QMainWindow):
+class Window(QWidget):
     def __init__(self):
-        super(MainWindow, self).__init__()
-        self.setGeometry(400, 300, 800, 150)
-        self.setWindowTitle('Goodstudy Words')
+        super().__init__()
+        self.setWindowTitle("GOODSTUDY WORDS TEST")
+        self.resize(600,300)
+        self.setStyleSheet("background-color: white;")
 
-        widget = Color('white')
-        self.setCentralWidget(widget)
+        # Create an outer layout
+        outerLayout = QVBoxLayout()
+        # Create a form layout for the label and line edit
+        topLayout = QFormLayout()
+        # Add a label and a line edit to the form layout
+        self.lineedit = QLineEdit(self)
+        self.lineedit.textChanged.connect(self.upate_name)
+
+        topLayout.addRow("학생 이름 : ", self.lineedit)
+        # Create a layout for the checkboxes
+        optionsLayout = QVBoxLayout()
+        # Add some checkboxes to the layout
+
+        elementary = QRadioButton('초등부', self)
+        elementary.toggled.connect(self.update)
+
+        middleschool = QRadioButton('중등부', self)
+        middleschool.toggled.connect(self.update)
+
+        highschool = QRadioButton('고등부', self)
+        highschool.toggled.connect(self.update)
+
+        optionsLayout.addWidget(elementary)
+        optionsLayout.addWidget(middleschool)
+        optionsLayout.addWidget(highschool)
+
+        self.list_widget = QListWidget(self)
+        self.list_widget.addItems(name_list)
+        # self.list_widget.itemClicked.connect(self.listClicked)
+
+        listLayout = QVBoxLayout()
+        listLayout.addWidget(self.list_widget)
+
+        print_answer_button = QPushButton('정답지 출력', self)
+        print_answer_button.clicked.connect(self.popup_answer)
+        print_test_button = QPushButton('시험지 출력', self)
+        print_test_button.clicked.connect(self.popup_test)
+
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(print_answer_button)
+        buttonLayout.addWidget(print_test_button)
+
+
+        outerLayout.addLayout(optionsLayout)
+        outerLayout.addLayout(topLayout)
+        outerLayout.addLayout(listLayout)
+        outerLayout.addLayout(buttonLayout)
         
-        pagelayout = QVBoxLayout()
-        button_layout = QHBoxLayout()
-        self.stacklayout = QStackedLayout()
+        self.setLayout(outerLayout)
 
-        pagelayout.addLayout(button_layout)
-        pagelayout.addLayout(self.stacklayout)
+    def upate_name(self, input):
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            item.setHidden(input not in item.text())
 
-        btn = QPushButton("초등부")
-        btn.pressed.connect(self.activate_tab_1)
-        button_layout.addWidget(btn)
-        self.stacklayout.addWidget(Color("red"))
+    def popup_answer(self):
+        selReadName = []
+        for r in self.list_widget.selectedItems():
+            selReadName.append(str(r.text()))
 
-        btn = QPushButton("중등부")
-        btn.pressed.connect(self.activate_tab_2)
-        button_layout.addWidget(btn)
-        self.stacklayout.addWidget(Color("green"))
+        selectedName = selReadName[0]
+        msg = QMessageBox(text="정답지를 출력합니다.")
+        msg.setWindowTitle("정답지 출력")
+        msg.setIcon(QMessageBox.Icon.Information)
 
-        btn = QPushButton("고등부")
-        btn.pressed.connect(self.activate_tab_3)
-        button_layout.addWidget(btn)
-        self.stacklayout.addWidget(Color("yellow"))
+        msg.setInformativeText("{}".format(main.show_term(selectedName)))
+        ret = msg.exec()
 
-        widget = QWidget()
-        widget.setLayout(pagelayout)
-        self.setCentralWidget(widget)
+    def popup_test(self):
+        selReadName = []
+        for r in self.list_widget.selectedItems():
+            selReadName.append(str(r.text()))
 
-    def activate_tab_1(self):
-        self.stacklayout.setCurrentIndex(0)
+        selectedName = selReadName[0]
+        msg = QMessageBox(text="시험지를 출력합니다.")
+        msg.setWindowTitle("시험지 출력")
+        msg.setIcon(QMessageBox.Icon.Information)
 
-    def activate_tab_2(self):
-        self.stacklayout.setCurrentIndex(1)
-
-    def activate_tab_3(self):
-        self.stacklayout.setCurrentIndex(2)
+        msg.setInformativeText("{}".format(main.show_term(selectedName)))
+        ret = msg.exec()
 
 
-app = QApplication(sys.argv)
-
-window = MainWindow()
-window.show()
-
-app.exec()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = Window()
+    window.show()
+    sys.exit(app.exec())
